@@ -15,9 +15,9 @@ import           Data.ByteArray         (ScrubbedBytes, ByteArrayAccess(..))
 import qualified Data.ByteArray         as BA
 import qualified Crypto.KDF.PBKDF2      as PBKDF2
 import           Crypto.Hash.Algorithms (SHA256(..))
+import           Crypto.Random          (getRandomBytes)
 
 import Network.Fernet.Base64
-import Network.Fernet.Util
 
 -- | Contains the signing key and encryption key. Create a 'Key' with 'key'.
 data Key = Key
@@ -50,10 +50,10 @@ generateKey :: IO ByteString
 generateKey = b64url <$> generateKeyBytes
 
 generateKeyBytes :: IO ByteString
-generateKeyBytes = randomBytes cipherKeyLength
+generateKeyBytes = getRandomBytes cipherKeyLength
 
 genSalt :: IO ByteString
-genSalt = randomBytes 16
+genSalt = getRandomBytes 16
 
 keyToBase64 :: Key -> ByteString
 keyToBase64 (Key s e) = b64url $ s <> e

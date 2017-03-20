@@ -25,7 +25,6 @@ library
                      , Network.Fernet.Crypto
                      , Network.Fernet.Key
                      , Network.Fernet.Token
-                     , Network.Fernet.Util
   build-depends:       base >=4.9 && <4.10
                      , binary               >= 0.8.3.0 && < 0.10
                      , byteable             >= 0.1.1  && < 0.2

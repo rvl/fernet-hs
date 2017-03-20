@@ -15,9 +15,9 @@ import           Crypto.Cipher.AES      (AES128)
 import           Crypto.MAC.HMAC        (HMAC(..), hmac, hmacGetDigest)
 import           Crypto.Cipher.Types
 import           Crypto.Error
+import           Crypto.Random          (getRandomBytes)
 
 import Network.Fernet.Token (Signature)
-import Network.Fernet.Util (randomBytes)
 
 sign :: ByteArrayAccess a => a -> ByteString -> Signature
 sign key t = convert $ hmacGetDigest (hmac key t :: HMAC SHA256)
@@ -49,7 +49,7 @@ cipherBlockSize :: Int
 cipherBlockSize = 16
 
 genIV :: IO ByteString
-genIV = randomBytes cipherBlockSize
+genIV = getRandomBytes cipherBlockSize
 
 aesSetup :: ByteArray a => a -> ByteString -> Maybe (AES128, IV AES128, Format)
 aesSetup key iv = (,,) <$> ctx <*> iv' <*> p
