@@ -23,8 +23,11 @@ main = join . execParser $
   info (helper <*> parser)
   (  fullDesc
   <> header "Fernet Utility"
-  <> progDesc "Encrypts/decrypts Fernet tokens. One token per line of input."
-  )
+  <> progDesc (
+      "Encrypts/decrypts Fernet tokens. " ++
+      "One token written to stdout for each line read from stdin. " ++
+      "Use --gen-key to make a key."
+  ))
   where
     parser :: Parser (IO ())
     parser =
@@ -33,51 +36,37 @@ main = join . execParser $
               ( long "key"
                 <> short 'k'
                 <> metavar "STRING"
-                <> help "Base64-encoded encryption keys"
+                <> help "Base64-urlsafe-encoded 32 byte encryption key"
               )) <|>
               KeyFile <$> ( strOption
                 ( long "key-file"
                   <> metavar "FILENAME"
-                  <> help "File containing base64-encoded keys"
+                  <> help "File containing the encryption key"
                 )
               ))
         <*> ( optional
               ( flag' Encrypt
                 ( long "encrypt"
                   <> short 'e'
-                  <> help "Encrypt input" )
+                  <> help "Encryption mode (default: autodetect)" )
               <|>
               flag' Decrypt
                 ( long "decrypt"
                   <> short 'd'
-                  <> help "Decrypt input" )
+                  <> help "Decryption mode (default: autodetect)" )
               )
             )
         <*> option ttl
             ( long "ttl"
             <> metavar "SECONDS"
-            <> help "Token lifetime in seconds (default: 0 -- infinite)"
-            <> value 0
+            <> help "Token lifetime in seconds (default: 1 minute)"
+            <> value 60
             )) <|>
       (genKey <$> ( flag' True
                     (long "gen-key"
                     <> short 'g'
                     <> help "Generate a key from the password on standard input"
                     )))
-{-
-(PasswordText <$> ( strOption
-              ( long "password"
-                <> short 'p'
-                <> metavar "STRING"
-                <> help "Encrypting/signing password"
-              )) <|>
-              PasswordFile <$> ( strOption
-                ( long "password-file"
-                  <> metavar "FILENAME"
-                  <> help "File containing encryption/signing password"
-                )
-              ))
--}
 
 genKey :: Bool -> IO ()
 genKey _ = do
