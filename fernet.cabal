@@ -8,7 +8,7 @@ license-file:        LICENSE
 author:              Rodney Lorrimar
 maintainer:          dev@rodney.id.au
 copyright:           2017 Rodney Lorrimar
-category:            Network
+category:            Web, Authentication
 build-type:          Simple
 extra-source-files:  README.md, ChangeLog.md
 cabal-version:       >=1.10
