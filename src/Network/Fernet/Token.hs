@@ -3,6 +3,9 @@ module Network.Fernet.Token
   , decode
   , serialize
   , deserialize
+  , isExpired
+  , hasExpired
+  , hasExpired'
   , TokenFields(..)
   , Signature
   ) where
@@ -12,7 +15,8 @@ import qualified Data.ByteString        as BS
 import qualified Data.ByteString.Lazy   as BL
 
 import Data.Word (Word8)
-import Data.Time.Clock.POSIX  (POSIXTime)
+import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
+import Data.Time.Clock (NominalDiffTime)
 import Data.Binary.Get
 import Data.Binary.Put
 
@@ -62,3 +66,23 @@ deserialize t = case runGetOrFail get (BL.fromStrict t) of
           iv <- getByteString 16
           ct <- BL.toStrict <$> getRemainingLazyByteString
           return $! TokenFields v (fromIntegral ts) iv ct
+
+-- | Returns @Right True@ if the token has expired,
+-- @Left _@ if the token could not be parsed.
+hasExpired :: NominalDiffTime -- ^ TTL value.
+           -> ByteString      -- ^ Encoded token.
+           -> IO (Either String Bool)
+hasExpired ttl token = isExpired ttl token <$> getPOSIXTime
+
+-- | Returns @Right True@ if the token is expired at the given time,
+-- @Left _@ if the token could not be parsed.
+isExpired :: NominalDiffTime -- ^ TTL value.
+          -> ByteString      -- ^ Encoded token.
+          -> POSIXTime       -- ^ The time to consider.
+          -> Either String Bool
+isExpired ttl token now = do
+  (tf, _, _) <- decode token
+  return $ hasExpired' ttl now tf
+
+hasExpired' :: NominalDiffTime -> POSIXTime -> TokenFields -> Bool
+hasExpired' ttl now TokenFields{..} = now - tfTimestamp < ttl

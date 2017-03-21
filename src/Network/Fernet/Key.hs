@@ -19,13 +19,15 @@ import           Crypto.Random          (getRandomBytes)
 
 import Network.Fernet.Base64
 
--- | Contains the signing key and encryption key. Create a 'Key' with 'key'.
+-- | Contains the signing key and encryption key. Create one with
+-- 'key', 'keyFromBase64', or 'generateKeyFromPassword'.
 data Key = Key
            { signingKey    :: ScrubbedBytes
            , encryptionKey :: ScrubbedBytes
            } deriving (Show, Eq)
 
--- | Constructs a pair of signing and encryption keys.
+-- | Constructs a pair of signing and encryption keys. Each key must
+-- be exactly 16 bytes long or this will fail.
 key :: ByteArrayAccess a
     => a   -- ^ Signing Key
     -> a   -- ^ Encryption Key
@@ -46,31 +48,42 @@ checkCipherKeyLength = (== cipherKeyLength)
 checkHashKeyLength :: Int -> Bool
 checkHashKeyLength = (>= 16)
 
-generateKey :: IO ByteString
-generateKey = b64url <$> generateKeyBytes
+-- | Generates new keys from the PRNG.
+generateKey :: IO Key
+generateKey = splitKeys <$> getRandomBytes (cipherKeyLength * 2)
 
-generateKeyBytes :: IO ByteString
-generateKeyBytes = getRandomBytes cipherKeyLength
+-- | Input must be exactly length 32 chars
+splitKeys :: ByteString -> Key
+splitKeys = make . BS.splitAt cipherKeyLength
+  where make (s, e) = Key (BA.convert s) (BA.convert e)
 
 genSalt :: IO ByteString
 genSalt = getRandomBytes 16
 
-keyToBase64 :: Key -> ByteString
+-- | Encodes the given key as urlsafe base64.
+keyToBase64 :: Key -> ByteString -- ^ URL-safe base64.
 keyToBase64 (Key s e) = b64url $ s <> e
 
-keyFromBase64 :: ByteString -> Either String Key
+-- | Decodes urlsafe base64-encoded bytes into a key. This will fail
+-- if the input is not exactly 256 bits long (43 characters in
+-- base64).
+keyFromBase64 :: ByteString -- ^ URL-safe base64.
+              -> Either String Key
 keyFromBase64 = (>>= make) . b64urldec
   where make s = case key sk ek of
                    Just k -> Right k
                    Nothing -> Left "Invalid key length"
           where (sk, ek) = BS.splitAt ((BS.length s) - 16) s
 
-generateKeyFromPassword :: Byteable p => Int -> p -> IO Key
+-- | Stretches the given password into a 'Key' using PBKDF2.
+generateKeyFromPassword :: Byteable p
+                        => Int -- ^ Number of key derivation function iterations.
+                        -> p   -- ^ The password.
+                        -> IO (Key, ByteString) -- ^ The key and random salt used.
 generateKeyFromPassword iterations p = do
   salt <- genSalt
   let keys = PBKDF2.generate prf params (toBytes p) salt
-      (sk, ek) = BS.splitAt 16 keys
-  return $ Key (BA.convert sk) (BA.convert ek)
+  return (splitKeys keys, salt)
   where
     prf = PBKDF2.prfHMAC SHA256
     params = PBKDF2.Parameters iterations 32

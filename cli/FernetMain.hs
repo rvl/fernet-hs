@@ -71,7 +71,7 @@ main = join . execParser $
 genKey :: Bool -> IO ()
 genKey _ = do
   password <- askPassword
-  k <- generateKeyFromPassword iterations password
+  (k, _) <- generateKeyFromPassword iterations password
   S8.hPutStrLn stdout (keyToBase64 k)
 
 askPassword ::  IO ByteString
@@ -127,7 +127,7 @@ readKeys (KeyText k) = keyFromString k
 readKeys (KeyFile f) = readFirstLine f >>= \k -> readKeys (KeyText k)
 
 readPassword :: Password -> IO Key
-readPassword (PasswordText p) = generateKeyFromPassword iterations (S8.pack p)
+readPassword (PasswordText p) = fst <$> generateKeyFromPassword iterations (S8.pack p)
 readPassword (PasswordFile f) = readFirstLine f >>= \p -> readPassword (PasswordText p)
 
 iterations = 100000 :: Int
