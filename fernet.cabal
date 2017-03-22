@@ -1,7 +1,11 @@
 name:                fernet
 version:             0.1.0.0
-synopsis:            Generates and verifies HMAC-based authentication tokens.
--- description:         
+synopsis:            Generate and verify HMAC-based authentication tokens.
+description:         Originally designed for use within OpenStack clusters,
+                     /Fernet/ is intended to be fast and light-weight, with
+                     non-persistent tokens. Fernet tokens are signed with a
+                     SHA256 HMAC and their contents encrypted with AES128
+                     in CBC mode.
 homepage:            https://github.com/rvl/fernet-hs
 license:             LGPL-3
 license-file:        LICENSE

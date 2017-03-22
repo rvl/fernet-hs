@@ -10,10 +10,9 @@ module Network.Fernet.Token
   , Signature
   ) where
 
-import Data.ByteString (ByteString)
+import           Data.ByteString        (ByteString)
 import qualified Data.ByteString        as BS
 import qualified Data.ByteString.Lazy   as BL
-
 import Data.Word (Word8)
 import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 import Data.Time.Clock (NominalDiffTime)
@@ -23,10 +22,10 @@ import Data.Binary.Put
 import Network.Fernet.Base64
 
 data TokenFields = TokenFields
-  { tfVersion    :: Word8      -- ^ Version, 8 bits
-  , tfTimestamp  :: POSIXTime  -- ^ Timestamp, 64 bits
-  , tfIV         :: ByteString -- ^ IV, 128 bits
-  , tfCiphertext :: ByteString -- ^ Ciphertext, variable length, multiple of 128 bits
+  { tokenVersion    :: Word8      -- ^ Version, 8 bits
+  , tokenTimestamp  :: POSIXTime  -- ^ Timestamp, 64 bits
+  , tokenIV         :: ByteString -- ^ IV, 128 bits
+  , tokenCiphertext :: ByteString -- ^ Ciphertext, variable length, multiple of 128 bits
   } deriving (Show, Eq)
 
 type Signature = ByteString
@@ -51,10 +50,10 @@ decode = (>>= decode') . b64urldec
 
 serialize :: TokenFields -> ByteString
 serialize TokenFields{..} = BL.toStrict . runPut $ do
-  putWord8 tfVersion
-  putWord64be (floor tfTimestamp)
-  putByteString tfIV
-  putByteString tfCiphertext
+  putWord8 tokenVersion
+  putWord64be (floor tokenTimestamp)
+  putByteString tokenIV
+  putByteString tokenCiphertext
 
 deserialize :: ByteString -> Either String TokenFields
 deserialize t = case runGetOrFail get (BL.fromStrict t) of
@@ -85,4 +84,4 @@ isExpired ttl token now = do
   return $ hasExpired' ttl now tf
 
 hasExpired' :: NominalDiffTime -> POSIXTime -> TokenFields -> Bool
-hasExpired' ttl now TokenFields{..} = now - tfTimestamp < ttl
+hasExpired' ttl now TokenFields{..} = now - tokenTimestamp < ttl

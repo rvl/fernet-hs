@@ -61,8 +61,7 @@ import           Data.Byteable          (constEqBytes)
 import           Data.Word              (Word8)
 import           Data.Time.Clock        (NominalDiffTime)
 import           Data.Time.Clock.POSIX  (POSIXTime, getPOSIXTime)
-
-import Data.Bifunctor (first)
+import           Data.Bifunctor         (first)
 
 import Network.Fernet.Crypto
 import Network.Fernet.Key
@@ -155,12 +154,12 @@ decrypt' Key{..} ttl now t = do
   checkExpiry ttl now fields
   checkSignature signingKey tb sig
   checkInputSize fields
-  case aesDecrypt encryptionKey (tfIV fields) (tfCiphertext fields) of
+  case aesDecrypt encryptionKey (tokenIV fields) (tokenCiphertext fields) of
     Just text -> Right text
     Nothing -> Left KeySizeInvalid
 
 checkVersion :: TokenFields -> Either DecryptError ()
-checkVersion tf | tfVersion tf == version = Right ()
+checkVersion tf | tokenVersion tf == version = Right ()
                 | otherwise = Left UnsupportedVersion
 
 -- | Maximum clock skew in the future direction.
@@ -168,7 +167,7 @@ maxClockSkew :: NominalDiffTime
 maxClockSkew = 60
 
 checkTimestamp :: POSIXTime -> TokenFields -> Either DecryptError ()
-checkTimestamp now TokenFields{..} | tfTimestamp - now <= maxClockSkew = Right ()
+checkTimestamp now TokenFields{..} | tokenTimestamp - now <= maxClockSkew = Right ()
                                    | otherwise = Left UnacceptableClockSkew
 
 checkExpiry :: NominalDiffTime -> POSIXTime -> TokenFields -> Either DecryptError ()
@@ -180,6 +179,6 @@ checkSignature k tf sig | constEqBytes sig (sign k tf) = Right ()
                         | otherwise                    = Left TokenInvalid
 
 checkInputSize :: TokenFields -> Either DecryptError ()
-checkInputSize tf | isBlocked (tfCiphertext tf) = Right ()
-                  | otherwise                   = Left InvalidBlockSize
+checkInputSize tf | isBlocked (tokenCiphertext tf) = Right ()
+                  | otherwise                      = Left InvalidBlockSize
   where isBlocked t = BS.length t `mod` cipherBlockSize == 0
