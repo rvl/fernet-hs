@@ -17,7 +17,7 @@ build-type:          Simple
 extra-source-files:  README.md, ChangeLog.md
 cabal-version:       >=1.10
 stability:           experimental
-bug-reports:         https://github.com/rvl/fernet/issues
+bug-reports:         https://github.com/rvl/fernet-hs/issues
 
 flag cli
   description: Build the example application
