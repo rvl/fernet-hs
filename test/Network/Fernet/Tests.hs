@@ -9,7 +9,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Char8 as S8
 import Data.Maybe (fromJust, fromMaybe)
 import Data.Either (isLeft)
-import Data.Aeson
+import Data.Aeson hiding (Key)
 import Control.Applicative
 import Data.Time.Clock (NominalDiffTime)
 import Data.Time.LocalTime (zonedTimeToUTC)
@@ -48,7 +48,7 @@ instance FromJSON Spec where
         <*> liftA S8.pack (v .:? "src" .!= "")
         <*> liftA BS.pack (v .:? "iv" .!= [])
 
-parseTime :: Monad m => String -> m POSIXTime
+parseTime :: MonadFail m => String -> m POSIXTime
 parseTime = fmap (utcTimeToPOSIXSeconds . zonedTimeToUTC) . parseTimeM False defaultTimeLocale fmt
   where fmt = "%Y-%m-%dT%H:%M:%S%z"
 
