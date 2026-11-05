@@ -1,5 +1,5 @@
 script:
-  - stack --no-terminal --skip-ghc-check --system-ghc test
+  - stack --no-terminal test
 
 sudo: false
 
